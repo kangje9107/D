@@ -1,0 +1,144 @@
+"SELECT (SELECT nm_cd FROM cd_dtil WHERE a.CD_BIZ_CL = no_cd AND  kind_no_cd   = 'DDT70003') AS ""사업구분"" --???
+, (SELECT NM_CD FROM CD_DTIL  WHERE KIND_NO_CD = 'DDT70005' AND NO_CD = A.분소코드 ) AS ""사무소"" --""분소명""
+, a.현장명
+, a.세대수
+, a.주소
+, a.처리상태
+, a.동
+, a.호
+, (SELECT no_lin FROM ddtbt_lin WHERE id_lin = a.id_lin AND cd_site = a.현장코드 AND cd_dong = a.동) ""라인""
+--SELECT * FROM ddtbt_hosh
+, a.접수단계
+--,a.접수년차
+, a.접수일자
+, nvl((SELECT ds_hname FROM insa_new WHERE a.id_rgst = id_sabun),a.id_rgst) ""접수자""
+, a.dr_pstm ""경과일"" --
+, a.nm_aplt_prsn ""신청자"" --
+, a.내용 ""하자내용""
+, a.dt_hndl_plan ""처리예정일"" --
+, a.dt_cstm_apmt ""고객약속일"" --
+, a.작업자명 ""작업자""
+, a.dt_wrk ""작업일자""
+, a.완료일자
+, a.등록일자
+, a.notm_re_rcpt ""재접수횟수""
+, a.notm_vrf_chk ""확검횟수""
+, (SELECT nm_cd FROM cd_dtil WHERE a.cd_rcpt_mthd = no_cd AND  kind_no_cd   = 'DDT70019') ""접수방법""
+, a.yn_urgc ""긴급""
+, a.yn_dup_rcpt ""중복""
+, a.yn_end_case ""종결"" --
+, (SELECT nm_cd FROM cd_dtil WHERE a.cd_loc_clsf = no_cd AND  kind_no_cd   = 'DDT70004') ""위치분류""
+, a.위치
+, a.부위
+, (SELECT NM_DFCT_L_CTYP FROM DDTBT_DFCT_L_CTYP WHERE ID_DFCT_L_CTYP =  a.ID_DFCT_L_CTYP) ""대공종""
+, a.공종
+, a.유형
+, a.원인
+, a.하자구분
+, (SELECT nm_cd FROM cd_dtil WHERE a.CD_CST_MAGN = no_cd AND  kind_no_cd   = 'DDT70025') ""시공주체"" --시공주체구분코드 DDT70025
+, (SELECT nm_vndr FROM ddtbv_vendor WHERE cd_cpny = a.CD_CST_CPNY) ""시공업체"" --시공업체
+, (SELECT nm_cd FROM cd_dtil WHERE a.CD_HNDL_MAGN = no_cd AND  kind_no_cd   = 'DDT70025') ""처리주체"" --처리주체구분코드 DDT70025
+, (SELECT nm_vndr FROM ddtbv_vendor WHERE cd_cpny = a.CD_HNDL_CPNY) ""처리업체""  --처리업체
+, (SELECT nm_vndr FROM ddtbv_vendor WHERE cd_cpny = a.CD_RE_SBCN_CPNY) ""하도업체""  --재하도업체코드
+, (SELECT ds_hname FROM ddtdv_use_prsn_info WHERE id_sabun = a.id_cplt_prsn) ""완료자""
+, (SELECT nm_tppg FROM ddtbt_tppg WHERE cd_site = a.현장코드 AND cd_tppg = a.cd_tppg) ""세대타입(주택형)""
+, a.yn_mtrl ""자재여부""
+-- select count(*)
+from (SELECT
+           a.CD_SITE AS 현장코드
+         , c.nm_site AS 현장명
+		 , c.no_hosh AS 세대수
+		 , c.addr    AS 주소
+         , a.CD_DONG 동, a.NOHS 호
+         , (SELECT NM_CD FROM CD_DTIL  WHERE KIND_NO_CD = 'DDT70018' AND NO_CD = a.cd_hndl_stat ) AS 처리상태
+         , (SELECT ATTR1 FROM CD_DTIL  WHERE KIND_NO_CD = 'DDT70008' AND NO_CD = a.CD_RCPT_PHS ) AS 접수단계
+         , (SELECT NM_CD FROM CD_DTIL
+              WHERE KIND_NO_CD = 'DDT70008'
+                AND NO_CD = a.CD_RCPT_PHS) || decode(yn_end_case ,'Y', ' 종결','')  as 접수년차
+------------------------------------------------------------
+         , NVL(
+           (SELECT NM_LOC
+              FROM DDTBT_LOC
+             WHERE a.ID_LOC = ID_LOC
+           ),'미등록') 위치
+------------------------------------------------------------
+         , NVL(
+           (SELECT NM_rgon
+              FROM DDTBT_rgon
+             WHERE a.ID_rgon = ID_rgon
+           ),'미등록') 부위
+------------------------------------------------------------
+         , ID_DFCT_CTYP AS 공종코드 --공종코드
+         , NVL(
+           (SELECT NM_DFCT_CTYP
+              FROM DDTBT_DFCT_CTYP
+             WHERE a.ID_DFCT_CTYP = ID_DFCT_CTYP
+           ),'미등록') 공종
+------------------------------------------------------------
+         , NVL(
+           (SELECT ID_DFCT_L_CTYP
+              FROM DDTBT_DFCT_CTYP
+             WHERE a.ID_DFCT_CTYP = ID_DFCT_CTYP
+           ),'') ID_DFCT_L_CTYP      --대공종코드
+------------------------------------------------------------
+         , ID_DFCT_TYPE  AS 유형코드 --유형코드
+         , NVL(
+           (SELECT NM_DFCT_TYPE
+              FROM DDTBT_DFCT_TYPE
+             WHERE a.ID_DFCT_TYPE = ID_DFCT_TYPE
+           ),'미등록') 유형
+------------------------------------------------------------
+          , ID_DFCT_CAUS  AS 원인코드 --원인코드
+         , NVL(
+           (SELECT NM_DFCT_CAUS
+              FROM DDTBT_DFCT_CAUS
+             WHERE a.ID_DFCT_CAUS = ID_DFCT_CAUS
+           ),'미등록') 원인
+------------------------------------------------------------
+         , NVL(
+           (SELECT NM_DFCT_CL
+              FROM DDTBT_DFCT_CL
+             WHERE a.ID_DFCT_CL = ID_DFCT_CL
+           ),'미등록') 하자구분
+         , a.DFCT_CNTS AS 내용
+         , a.DT_RCPT AS 접수일자
+         , a.dt_cplt AS 완료일자
+         ,(select nm_vndr from dbcat_vendor where cd_vndr in (select distinct cd_cpny from ddtbt_site_cpny)
+            and cd_vndr=a.CD_HNDL_CPNY) AS 협력업체
+         ,(select cd_area_offc from ddtbt_site where CD_SITE=a.cd_site) AS 분소코드
+         , b.id_fcts
+         , a.NM_WRK_PRSN 작업자명
+         , a.nm_aplt_prsn, a.dt_hndl_plan
+			, a.dt_cplt      -- 일자_완료(확검일)
+			, a.notm_vrf_chk -- 횟수_확인_점검
+			, a.notm_re_rcpt -- 횟수_재_접수
+			, a.dr_pstm      -- 일수_경과
+			 , a.yn_urgc      -- 여부_긴급
+			 , a.yn_dup_rcpt  -- 여부_중복_접수
+			 , a.yn_mtrl      -- 여부_자재
+			, a.yn_end_case  -- 여부_종결_건
+			, a.dt_cstm_apmt --고객약속일
+			, nvl(a.cd_re_sbcn_cpny, a.cd_hndl_cpny) as cd_hndl_sbcn_cpny -- 코드_처리_하도_업체
+			, a.id_cplt_prsn
+			, a.cd_loc_clsf
+			, a.id_rgst
+			, a.cd_rcpt_mthd
+			, (SELECT id_lin FROM ddtbt_hosh WHERE a.CD_SITE = cd_site(+) and a.CD_DONG = cd_dong(+) and a.nohs = nohs(+)) id_lin
+			, (SELECT CD_BIZ_CL FROM DDTBT_SITE WHERE CD_SITE = a.cd_site) AS CD_BIZ_CL
+			, CD_CST_MAGN  --시공주체구분코드 DDT70025
+			, CD_CST_CPNY  --시공업체
+			, CD_HNDL_MAGN  --처리주체구분코드 DDT70025
+			, CD_HNDL_CPNY  --처리업체
+			, CD_RE_SBCN_CPNY --재하도업체코드
+			, (SELECT cd_tppg FROM DDTBT_HOSH WHERE cd_site = a.cd_site AND cd_dong = a.CD_DONG AND NOHS = a.NOHS) AS cd_tppg --세대타입
+			, a.dt_wrk --작업일자
+			, to_char(a.dnt_rgst,'YYYYMMDD') AS ""등록일자""
+  FROM DDTBT_DFCT a,  ddtbt_site b, DDTDT_SITE_INFO c
+ WHERE a.cd_site = '070420'
+ and a.cd_hndl_stat= 'B'
+--// 필수▼▼▼ -----------------------------------
+AND a.cd_site = b.cd_site  --필수
+AND a.cd_site = c.cd_site  --필수
+--// 필수▲▲▲ -----------------------------------
+
+) A"
